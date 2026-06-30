@@ -1,0 +1,2227 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analizador de Trayectoria Académica</title>
+  <style>
+    :root {
+      --pbi-yellow: #f2c811;
+      --pbi-yellow-dark: #d8ae08;
+      --ink: #1f2328;
+      --muted: #667085;
+      --line: #d9dde5;
+      --canvas: #f3f4f8;
+      --panel: #ffffff;
+      --nav: #111827;
+      --nav-2: #1f2937;
+      --blue: #2563eb;
+      --green: #0f8f5f;
+      --orange: #c46a1a;
+      --red: #b42318;
+      --violet: #7c3aed;
+      --teal: #0f766e;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+      --radius: 8px;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, var(--nav), var(--nav-2));
+      color: #eef2f7;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 8px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.14);
+      margin-bottom: 14px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: var(--pbi-yellow);
+      color: #111827;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-title {
+      line-height: 1.15;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .brand-subtitle {
+      color: #cbd5e1;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .nav-section {
+      color: #9ca3af;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .08em;
+      margin: 18px 8px 8px;
+    }
+
+    .nav-item {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #dbe4ef;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 8px;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .nav-item:hover,
+    .nav-item.active {
+      background: rgba(242, 200, 17, .16);
+      color: #fff;
+    }
+
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      color: var(--pbi-yellow);
+    }
+
+    .sidebar-note {
+      margin: 18px 8px 0;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.45;
+      background: rgba(255,255,255,.04);
+    }
+
+    main {
+      min-width: 0;
+      padding: 18px;
+    }
+
+    .topbar {
+      min-height: 64px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: 21px;
+      margin: 0 0 4px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions,
+    .button-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 0 12px;
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      border-color: #aeb6c2;
+      background: #f9fafb;
+    }
+
+    .btn.primary {
+      background: var(--pbi-yellow);
+      border-color: var(--pbi-yellow-dark);
+      color: #171717;
+    }
+
+    .btn.dark {
+      background: var(--nav);
+      border-color: var(--nav);
+      color: #fff;
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .report-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 13px;
+      box-shadow: var(--shadow);
+      min-height: 102px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .kpi-value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      margin-top: 12px;
+    }
+
+    .kpi-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+      min-height: 16px;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(360px, 1.08fr) minmax(320px, .92fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .section-grid.wide-left {
+      grid-template-columns: minmax(420px, 1.2fr) minmax(300px, .8fr);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      min-height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .panel-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel-body {
+      padding: 13px;
+    }
+
+    .uploader {
+      display: grid;
+      grid-template-columns: minmax(280px, .92fr) minmax(300px, 1.08fr);
+      gap: 14px;
+    }
+
+    .dropzone {
+      border: 1px dashed #9aa4b2;
+      border-radius: var(--radius);
+      padding: 18px;
+      min-height: 206px;
+      background: #f9fafb;
+      display: grid;
+      gap: 12px;
+      align-content: center;
+    }
+
+    .dropzone.drag {
+      border-color: var(--pbi-yellow-dark);
+      background: #fff9db;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      color: #374151;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="url"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+      min-height: 38px;
+    }
+
+    textarea {
+      min-height: 205px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .status {
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status.ok { color: #065f46; background: #d1fae5; }
+    .status.warn { color: #92400e; background: #fef3c7; }
+    .status.bad { color: #991b1b; background: #fee2e2; }
+    .status.info { color: #1d4ed8; background: #dbeafe; }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 500px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e7ebf1;
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 1;
+      color: #475467;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    tr:hover td {
+      background: #fcfcfd;
+    }
+
+    .grade {
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .grade.low { color: var(--red); }
+    .grade.mid { color: var(--orange); }
+    .grade.high { color: var(--green); }
+
+    .chart {
+      width: 100%;
+      height: 250px;
+      display: block;
+    }
+
+    .chart.tall {
+      height: 316px;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .insight {
+      border: 1px solid #e5e7eb;
+      border-left: 5px solid var(--blue);
+      border-radius: 6px;
+      padding: 10px 11px;
+      background: #fff;
+    }
+
+    .insight strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+
+    .insight p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .insight.green { border-left-color: var(--green); }
+    .insight.orange { border-left-color: var(--orange); }
+    .insight.red { border-left-color: var(--red); }
+    .insight.violet { border-left-color: var(--violet); }
+    .insight.teal { border-left-color: var(--teal); }
+
+    .recommendation-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .rec-card {
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fff;
+      min-height: 138px;
+    }
+
+    .rec-card h3 {
+      font-size: 14px;
+      margin: 0 0 8px;
+    }
+
+    .rec-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #475467;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      border: 1px solid #d0d5dd;
+      background: #fff;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 12px;
+      color: #344054;
+    }
+
+    .llm-output {
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: var(--radius);
+      padding: 12px;
+      min-height: 260px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      font-size: 13px;
+      overflow: auto;
+      max-height: 480px;
+    }
+
+    .explain {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--pbi-yellow-dark);
+    }
+
+    .hidden { display: none !important; }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .empty-state {
+      border: 1px dashed #cfd5df;
+      border-radius: var(--radius);
+      padding: 20px;
+      background: #fbfcfe;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1180px) {
+      .kpi-grid { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+      .section-grid, .section-grid.wide-left, .uploader { grid-template-columns: 1fr; }
+      .recommendation-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+      .kpi-grid,
+      .recommendation-grid,
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+      main { padding: 10px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .app { display: block; }
+      .sidebar, .actions, .button-row.no-print, .panel-tools, .uploader-panel { display: none !important; }
+      main { padding: 0; }
+      .topbar, .panel, .kpi {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+      .panel { margin-bottom: 10px; }
+      .report-grid { gap: 10px; }
+      .table-wrap { max-height: none; overflow: visible; }
+      th { position: static; }
+      .llm-output {
+        background: #fff;
+        color: #111827;
+        border: 1px solid #d0d5dd;
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navegación del reporte">
+      <div class="brand">
+        <div class="brand-mark">TA</div>
+        <div>
+          <div class="brand-title">Trayectoria Académica</div>
+          <div class="brand-subtitle">Lic. Sistemas Computacionales</div>
+        </div>
+      </div>
+
+      <div class="nav-section">Reporte</div>
+      <button class="nav-item active" data-scroll="carga"><span class="nav-icon">▣</span><span>Carga de historial</span></button>
+      <button class="nav-item" data-scroll="resumen"><span class="nav-icon">▤</span><span>Resumen ejecutivo</span></button>
+      <button class="nav-item" data-scroll="historial"><span class="nav-icon">≡</span><span>Historial académico</span></button>
+      <button class="nav-item" data-scroll="analitica"><span class="nav-icon">◎</span><span>Analítica ML</span></button>
+      <button class="nav-item" data-scroll="recomendaciones"><span class="nav-icon">◇</span><span>Empleabilidad</span></button>
+      <button class="nav-item" data-scroll="ollama"><span class="nav-icon">⌁</span><span>Ollama LLM</span></button>
+
+      <div class="nav-section">Configuración</div>
+      <div class="field">
+        <label for="ollamaUrl">Endpoint Ollama</label>
+        <input id="ollamaUrl" type="url" value="http://localhost:11434/api/generate">
+      </div>
+      <div class="field">
+        <label for="ollamaModel">Modelo</label>
+        <input id="ollamaModel" type="text" value="llama3.2:latest">
+      </div>
+      <div class="field">
+        <label for="passGrade">Calificación mínima aprobatoria</label>
+        <input id="passGrade" type="number" min="0" max="100" value="60">
+      </div>
+      <div class="sidebar-note">
+        La app procesa el historial en el navegador. El LLM solo se consulta cuando se pulsa el botón de Ollama.
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <h1>Analizador interactivo de trayectoria académica</h1>
+          <div class="subtitle">Carga un PDF, TXT o CSV del historial académico para estimar avance, riesgo, carga sugerida, áreas fuertes y ruta de empleabilidad.</div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="analyzeBtn">Analizar</button>
+          <button class="btn" id="ollamaBtn" disabled>Generar con Ollama</button>
+          <button class="btn dark" id="printBtn">Imprimir / descargar PDF</button>
+        </div>
+      </header>
+
+      <div class="report-grid">
+        <section id="carga" class="panel uploader-panel">
+          <div class="panel-header">
+            <div class="panel-title">Carga de historial</div>
+            <div class="panel-tools"><span id="fileStatus" class="status info">Sin archivo</span></div>
+          </div>
+          <div class="panel-body uploader">
+            <div class="dropzone" id="dropzone">
+              <div>
+                <div class="panel-title">Archivo del historial académico</div>
+                <p class="explain">Acepta PDF, TXT y CSV. En PDF se usa un extractor local compatible con documentos generados por sistemas escolares; si el PDF está escaneado, pega el texto OCR en el panel derecho.</p>
+              </div>
+              <input id="fileInput" type="file" accept=".pdf,.txt,.csv,text/plain,application/pdf,text/csv">
+              <div class="mini-grid">
+                <div class="field">
+                  <label for="studentName">Nombre del estudiante</label>
+                  <input id="studentName" type="text" placeholder="Opcional">
+                </div>
+                <div class="field">
+                  <label for="careerName">Programa</label>
+                  <input id="careerName" type="text" value="Licenciatura en Sistemas Computacionales">
+                </div>
+              </div>
+              <div class="button-row no-print">
+                <button class="btn" id="sampleBtn">Cargar ejemplo</button>
+                <button class="btn" id="clearBtn">Limpiar</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="rawText">Texto extraído o pegado del historial</label>
+              <textarea id="rawText" placeholder="Pega aquí el historial si el PDF no se puede leer automáticamente. Se detectan materias, calificaciones, créditos, periodos y estatus mediante patrones flexibles."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section id="resumen">
+          <div class="kpi-grid">
+            <article class="kpi">
+              <div class="kpi-label">Promedio estimado</div>
+              <div class="kpi-value" id="kpiAverage">--</div>
+              <div class="kpi-meta" id="kpiAverageMeta">Esperando historial</div>
+            </article>
+            <article class="kpi">
+              <div class="kpi-label">Materias aprobadas</div>
+              <div class="kpi-value" id="kpiPassed">--</div>
+              <div class="kpi-meta" id="kpiPassedMeta">Sin registros</div>
+            </article>
+            <article class="kpi">
+              <div class="kpi-label">Riesgo académico</div>
+              <div class="kpi-value" id="kpiRisk">--</div>
+              <div class="kpi-meta" id="kpiRiskMeta">Modelo local</div>
+            </article>
+            <article class="kpi">
+              <div class="kpi-label">Carga sugerida</div>
+              <div class="kpi-value" id="kpiLoad">--</div>
+              <div class="kpi-meta" id="kpiLoadMeta">Materias próximo periodo</div>
+            </article>
+            <article class="kpi">
+              <div class="kpi-label">Potencial laboral</div>
+              <div class="kpi-value" id="kpiJobFit">--</div>
+              <div class="kpi-meta" id="kpiJobFitMeta">Según áreas fuertes</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section-grid wide-left">
+          <div id="historial" class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Historial académico detectado</div>
+              <div class="panel-tools"><span id="recordCount">0 registros</span></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Periodo</th>
+                    <th>Materia</th>
+                    <th>Área</th>
+                    <th>Calif.</th>
+                    <th>Créd.</th>
+                    <th>Estatus</th>
+                  </tr>
+                </thead>
+                <tbody id="historyBody">
+                  <tr><td colspan="6"><div class="empty-state">Carga o pega un historial y pulsa Analizar.</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Diagnóstico ejecutivo</div>
+              <div class="panel-tools"><span id="analysisQuality" class="status warn">Pendiente</span></div>
+            </div>
+            <div class="panel-body">
+              <div id="insights" class="insight-list">
+                <div class="empty-state">Aquí aparecerán fortalezas, focos de atención y recomendaciones de carga.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="analitica" class="section-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Promedio por área de formación</div>
+              <div class="panel-tools">Clasificación automática</div>
+            </div>
+            <div class="panel-body">
+              <canvas id="areaChart" class="chart tall" aria-label="Gráfica de promedio por área"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Tendencia y simulador de carga</div>
+              <div class="panel-tools"><span id="trendLabel">Sin datos</span></div>
+            </div>
+            <div class="panel-body">
+              <canvas id="trendChart" class="chart" aria-label="Tendencia por periodo"></canvas>
+              <div class="field">
+                <label for="loadSlider">Materias a simular el próximo periodo</label>
+                <div class="range-row">
+                  <input id="loadSlider" type="range" min="3" max="9" value="6">
+                  <strong id="loadValue">6</strong>
+                </div>
+              </div>
+              <div id="loadSimulation" class="insight orange">
+                <strong>Simulación pendiente</strong>
+                <p>El riesgo estimado se actualizará después del análisis.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="recomendaciones" class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Cursos, certificaciones y ruta de empleabilidad</div>
+            <div class="panel-tools"><span id="careerPath">Ruta sugerida pendiente</span></div>
+          </div>
+          <div class="panel-body">
+            <div id="recommendations" class="recommendation-grid">
+              <div class="empty-state">Las recomendaciones se generan a partir de las áreas más débiles y más fuertes.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="ollama" class="section-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Prompt para Ollama</div>
+              <div class="panel-tools"><span id="ollamaStatus" class="status info">Listo</span></div>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label for="llmInstruction">Instrucción del análisis LLM</label>
+                <textarea id="llmInstruction">Actúa como tutor académico y orientador de empleabilidad para Licenciatura en Sistemas Computacionales. Redacta un informe breve, directo y accionable en español.
+
+Reglas:
+- No repitas todos los indicadores del tablero; menciona solo los datos necesarios para justificar decisiones.
+- Máximo 180 palabras.
+- Usa frases cortas y precisas.
+- No inventes materias, empleos, certificaciones ni causas.
+- Evita introducciones largas y conclusiones genéricas.
+
+Formato:
+1. Diagnóstico en 2 frases.
+2. Carga sugerida para el próximo periodo.
+3. Prioridades de mejora.
+4. Fortalezas a potenciar.
+5. Cursos o certificaciones recomendadas.
+6. Próximas 3 acciones concretas.</textarea>
+              </div>
+              <div class="button-row no-print">
+                <button class="btn primary" id="ollamaBtn2" disabled>Consultar Ollama</button>
+                <button class="btn" id="testOllamaBtn">Probar conexión</button>
+                <button class="btn" id="copyPromptBtn" disabled>Copiar prompt</button>
+              </div>
+              <p class="small">Si el navegador bloquea la conexión a Ollama, configura Ollama para aceptar el origen del archivo local o ejecuta la app desde un servidor local.</p>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Informe narrativo LLM</div>
+              <div class="panel-tools">Modelo configurable</div>
+            </div>
+            <div class="panel-body">
+              <div id="llmOutput" class="llm-output">El informe LLM aparecerá aquí. El análisis local funciona aunque Ollama no esté disponible.</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      rawText: "",
+      records: [],
+      analysis: null,
+      latestPrompt: "",
+      pdfjs: null
+    };
+
+    const areaRules = [
+      { area: "Programación y software", keys: ["program", "algorit", "estructura", "datos", "software", "web", "móvil", "movil", "java", "python", "orientada", "objetos", "compil", "pruebas", "calidad", "requerimientos", "desarrollo"] },
+      { area: "Datos e inteligencia artificial", keys: ["base de datos", "bases de datos", "sql", "estad", "probabilidad", "minería", "mineria", "inteligencia", "artificial", "machine", "aprendizaje", "datos", "analítica", "analitica", "big data"] },
+      { area: "Redes, infraestructura y seguridad", keys: ["redes", "telecom", "sistemas operativos", "linux", "seguridad", "ciber", "arquitectura", "servidor", "cloud", "nube", "infraestructura", "administración de sistemas", "administracion de sistemas"] },
+      { area: "Matemáticas y ciencias básicas", keys: ["cálculo", "calculo", "álgebra", "algebra", "matem", "discret", "física", "fisica", "ecuaciones", "investigación de operaciones", "investigacion de operaciones", "lógica", "logica"] },
+      { area: "Gestión, proyectos y negocio", keys: ["administr", "gestión", "gestion", "proyecto", "emprend", "contabilidad", "econom", "innovación", "innovacion", "ética", "etica", "auditor", "planeación", "planeacion"] },
+      { area: "Comunicación e inglés", keys: ["inglés", "ingles", "comunicación", "comunicacion", "redacción", "redaccion", "lectura", "expresión", "expresion", "seminario"] }
+    ];
+
+    const recommendationsByArea = {
+      "Programación y software": {
+        improve: ["freeCodeCamp JavaScript Algorithms", "Meta Front-End Developer", "GitHub Foundations", "Curso de pruebas de software y QA"],
+        boost: ["Construir portafolio con 3 proyectos desplegados", "Certificación Scrum Foundation", "Patrones de diseño y arquitectura limpia"]
+      },
+      "Datos e inteligencia artificial": {
+        improve: ["SQL avanzado", "Python for Everybody", "Google Data Analytics", "Estadística aplicada con Python"],
+        boost: ["IBM Data Science Professional Certificate", "Microsoft Azure AI Fundamentals AI-900", "Proyecto de dashboard con datos reales"]
+      },
+      "Redes, infraestructura y seguridad": {
+        improve: ["Cisco Networking Basics", "Linux Essentials", "Fundamentos de Docker", "Google Cybersecurity Certificate"],
+        boost: ["Cisco CCNA", "CompTIA Security+ fundamentos", "AWS Cloud Practitioner o Azure AZ-900"]
+      },
+      "Matemáticas y ciencias básicas": {
+        improve: ["Khan Academy cálculo/álgebra", "Estadística para ciencia de datos", "Matemáticas discretas para computación"],
+        boost: ["Modelado matemático con Python", "Optimización aplicada", "Probabilidad para machine learning"]
+      },
+      "Gestión, proyectos y negocio": {
+        improve: ["Fundamentos de gestión de proyectos", "Scrum Fundamentals", "Comunicación profesional"],
+        boost: ["Google Project Management", "Product analytics básico", "Gestión ágil de proyectos tecnológicos"]
+      },
+      "Comunicación e inglés": {
+        improve: ["Inglés técnico B1-B2", "Redacción profesional", "Presentaciones técnicas"],
+        boost: ["Certificación TOEFL/IELTS o equivalente", "Technical Writing", "Entrevistas técnicas en inglés"]
+      },
+      "Formación general": {
+        improve: ["Hábitos de estudio con recuperación espaciada", "Gestión del tiempo", "Lectura técnica"],
+        boost: ["Portafolio profesional", "CV orientado a proyectos", "Simulación de entrevistas"]
+      }
+    };
+
+    const el = (id) => document.getElementById(id);
+    const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+    const round = (n, d = 1) => Number.isFinite(n) ? Number(n.toFixed(d)) : 0;
+    const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+
+    document.addEventListener("DOMContentLoaded", () => {
+      bindEvents();
+      resizeCanvases();
+      window.addEventListener("resize", resizeCanvases);
+    });
+
+    function bindEvents() {
+      document.querySelectorAll(".nav-item").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
+          button.classList.add("active");
+          el(button.dataset.scroll).scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+
+      el("fileInput").addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (file) await loadFile(file);
+      });
+
+      const dropzone = el("dropzone");
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropzone.classList.add("drag");
+        });
+      });
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropzone.classList.remove("drag");
+        });
+      });
+      dropzone.addEventListener("drop", async (event) => {
+        const file = event.dataTransfer.files[0];
+        if (file) await loadFile(file);
+      });
+
+      el("analyzeBtn").addEventListener("click", runAnalysis);
+      el("printBtn").addEventListener("click", printReport);
+      el("sampleBtn").addEventListener("click", loadSample);
+      el("clearBtn").addEventListener("click", clearAll);
+      el("ollamaBtn").addEventListener("click", callOllama);
+      el("ollamaBtn2").addEventListener("click", callOllama);
+      el("testOllamaBtn").addEventListener("click", testOllama);
+      el("copyPromptBtn").addEventListener("click", copyPrompt);
+      el("passGrade").addEventListener("change", () => {
+        if (el("rawText").value.trim()) runAnalysis();
+      });
+      el("loadSlider").addEventListener("input", updateLoadSimulation);
+    }
+
+    async function loadFile(file) {
+      setStatus("fileStatus", "info", "Leyendo archivo");
+      try {
+        let text = "";
+        if (/pdf$/i.test(file.name) || file.type === "application/pdf") {
+          const buffer = await file.arrayBuffer();
+          text = await extractPdfText(buffer);
+          if (isLikelyBadExtraction(text)) {
+            setStatus("fileStatus", "bad", "PDF no legible");
+          } else {
+            setStatus("fileStatus", "ok", file.name);
+          }
+        } else {
+          text = await file.text();
+          setStatus("fileStatus", "ok", file.name);
+        }
+        el("rawText").value = cleanExtractedText(text);
+        state.rawText = el("rawText").value;
+        if (state.rawText && !isLikelyBadExtraction(state.rawText)) {
+          runAnalysis();
+        } else {
+          showReadProblem(file.name);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus("fileStatus", "bad", "No se pudo leer");
+        showReadProblem(file.name, error);
+      }
+    }
+
+    async function extractPdfText(buffer) {
+      try {
+        const text = await extractPdfTextWithPdfJs(buffer);
+        if (!isLikelyBadExtraction(text)) return text;
+      } catch (error) {
+        console.warn("PDF.js no pudo leer el documento, se usará extractor básico", error);
+      }
+
+      const bytes = new Uint8Array(buffer);
+      const latin = new TextDecoder("latin1").decode(bytes);
+      const chunks = [latin];
+      const streamRanges = findPdfStreams(latin);
+
+      for (const range of streamRanges) {
+        const header = latin.slice(Math.max(0, range.headerStart), range.start);
+        const streamBytes = bytes.slice(range.byteStart, range.byteEnd);
+        if (/FlateDecode/i.test(header) && "DecompressionStream" in window) {
+          try {
+            const stream = new Blob([streamBytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+            chunks.push(await new Response(stream).text());
+          } catch (error) {
+            console.warn("No se pudo descomprimir stream PDF", error);
+          }
+        } else if (!/FlateDecode|DCTDecode|JPXDecode/i.test(header)) {
+          chunks.push(new TextDecoder("latin1").decode(streamBytes));
+        }
+      }
+
+      const textItems = [];
+      for (const chunk of chunks) {
+        textItems.push(...extractPdfTextItems(chunk));
+      }
+      return textItems.join("\n");
+    }
+
+    async function loadPdfJs() {
+      if (state.pdfjs) return state.pdfjs;
+      const pdfjs = await import("./vendor/pdfjs/pdf.min.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = "./vendor/pdfjs/pdf.worker.min.mjs";
+      state.pdfjs = pdfjs;
+      return pdfjs;
+    }
+
+    async function extractPdfTextWithPdfJs(buffer) {
+      const pdfjs = await loadPdfJs();
+      const loadingTask = pdfjs.getDocument({
+        data: new Uint8Array(buffer),
+        disableFontFace: true,
+        useSystemFonts: true
+      });
+      const pdf = await loadingTask.promise;
+      const pages = [];
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const content = await page.getTextContent({ normalizeWhitespace: true, disableCombineTextItems: false });
+        const rows = groupPdfItemsByRow(content.items);
+        pages.push(rows.join("\n"));
+      }
+
+      await pdf.destroy();
+      return pages.join("\n\n");
+    }
+
+    function groupPdfItemsByRow(items) {
+      const rows = [];
+      for (const item of items) {
+        const text = String(item.str || "").trim();
+        if (!text) continue;
+        const x = item.transform?.[4] || 0;
+        const y = Math.round((item.transform?.[5] || 0) / 3) * 3;
+        let row = rows.find((candidate) => Math.abs(candidate.y - y) <= 3);
+        if (!row) {
+          row = { y, parts: [] };
+          rows.push(row);
+        }
+        row.parts.push({ x, text });
+      }
+
+      return rows
+        .sort((a, b) => b.y - a.y)
+        .map((row) => row.parts
+          .sort((a, b) => a.x - b.x)
+          .map((part) => part.text)
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim())
+        .filter(Boolean);
+    }
+
+    function findPdfStreams(latin) {
+      const ranges = [];
+      let cursor = 0;
+      while (cursor < latin.length) {
+        const streamIndex = latin.indexOf("stream", cursor);
+        if (streamIndex === -1) break;
+        let dataStart = streamIndex + 6;
+        if (latin[dataStart] === "\r" && latin[dataStart + 1] === "\n") dataStart += 2;
+        else if (latin[dataStart] === "\n" || latin[dataStart] === "\r") dataStart += 1;
+        const endIndex = latin.indexOf("endstream", dataStart);
+        if (endIndex === -1) break;
+        let dataEnd = endIndex;
+        if (latin[dataEnd - 2] === "\r" && latin[dataEnd - 1] === "\n") dataEnd -= 2;
+        else if (latin[dataEnd - 1] === "\n" || latin[dataEnd - 1] === "\r") dataEnd -= 1;
+        ranges.push({
+          headerStart: Math.max(0, latin.lastIndexOf("obj", streamIndex) - 250),
+          start: streamIndex,
+          byteStart: dataStart,
+          byteEnd: dataEnd
+        });
+        cursor = endIndex + 9;
+      }
+      return ranges;
+    }
+
+    function extractPdfTextItems(content) {
+      const items = [];
+      const literalRegex = /\((?:\\.|[^\\)])*\)\s*(?:Tj|'|"|TJ)?/g;
+      const hexRegex = /<([0-9A-Fa-f\s]{4,})>\s*(?:Tj|'|"|TJ)?/g;
+      let match;
+      while ((match = literalRegex.exec(content)) !== null) {
+        const raw = match[0].replace(/\s*(?:Tj|'|"|TJ)?\s*$/, "");
+        const decoded = decodePdfLiteral(raw.slice(1, -1));
+        if (looksLikeText(decoded)) items.push(decoded);
+      }
+      while ((match = hexRegex.exec(content)) !== null) {
+        const decoded = decodePdfHex(match[1]);
+        if (looksLikeText(decoded)) items.push(decoded);
+      }
+      return items;
+    }
+
+    function decodePdfLiteral(value) {
+      return value
+        .replace(/\\n/g, "\n")
+        .replace(/\\r/g, "\r")
+        .replace(/\\t/g, "\t")
+        .replace(/\\b/g, "\b")
+        .replace(/\\f/g, "\f")
+        .replace(/\\([()\\])/g, "$1")
+        .replace(/\\([0-7]{1,3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)));
+    }
+
+    function decodePdfHex(value) {
+      const hex = value.replace(/\s+/g, "");
+      const bytes = [];
+      for (let i = 0; i < hex.length; i += 2) {
+        bytes.push(parseInt(hex.slice(i, i + 2).padEnd(2, "0"), 16));
+      }
+      if (bytes.length > 2 && bytes[0] === 254 && bytes[1] === 255) {
+        let out = "";
+        for (let i = 2; i < bytes.length - 1; i += 2) {
+          out += String.fromCharCode((bytes[i] << 8) + bytes[i + 1]);
+        }
+        return out;
+      }
+      return new TextDecoder("latin1").decode(new Uint8Array(bytes));
+    }
+
+    function looksLikeText(value) {
+      const text = value.trim();
+      if (text.length < 2) return false;
+      const printable = text.replace(/[^\p{L}\p{N}\s.,;:()\/_-]/gu, "");
+      return printable.length / text.length > .6;
+    }
+
+    function isLikelyBadExtraction(text) {
+      const clean = String(text || "").trim();
+      if (clean.length < 80) return true;
+      const suspicious = clean.replace(/[\p{L}\p{N}\s.,;:()\/_\-ÁÉÍÓÚÜÑáéíóúüñ]/gu, "");
+      const letters = clean.match(/[\p{L}]/gu) || [];
+      const gradeSignals = clean.match(/\b(?:[6-9]\d|100|10|9|8|7|6|5)\b/g) || [];
+      return suspicious.length / clean.length > .18 || letters.length < 35 || gradeSignals.length < 3;
+    }
+
+    function showReadProblem(fileName, error) {
+      const detail = error ? `\n\nDetalle técnico: ${error.message || error}` : "";
+      const message =
+        `No pude extraer texto académico legible de "${fileName}".\n\n` +
+        "Si el PDF es escaneado, primero conviértelo con OCR. Si el PDF sí contiene texto, abre la app desde un servidor local para que PDF.js pueda cargar su módulo y vuelve a intentar.\n\n" +
+        "También puedes pegar aquí el texto del historial y pulsar Analizar." + detail;
+      el("rawText").value = message;
+      state.rawText = message;
+      el("historyBody").innerHTML = `<tr><td colspan="6"><div class="empty-state">${escapeHtml(message).replace(/\n/g, "<br>")}</div></td></tr>`;
+      el("recordCount").textContent = "0 registros";
+      el("insights").innerHTML = `<div class="empty-state">No hay datos académicos legibles todavía.</div>`;
+    }
+
+    function cleanExtractedText(text) {
+      return text
+        .replace(/\u0000/g, "")
+        .replace(/[ \t]{2,}/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    function runAnalysis() {
+      const text = el("rawText").value.trim();
+      if (!text) {
+        alert("Carga un archivo o pega el texto del historial académico.");
+        return;
+      }
+
+      state.rawText = text;
+      state.records = parseAcademicText(text);
+      if (!state.records.length) {
+        setStatus("analysisQuality", "bad", "Sin materias");
+        el("historyBody").innerHTML = `<tr><td colspan="6"><div class="empty-state">No se detectaron materias con calificación. Revisa que el texto tenga renglones como: Materia 85 6 Aprobada, o pega el texto extraído con columnas completas.</div></td></tr>`;
+        el("recordCount").textContent = "0 registros";
+        el("insights").innerHTML = `<div class="empty-state">El análisis no se ejecutó porque no hay registros académicos legibles.</div>`;
+        el("recommendations").innerHTML = `<div class="empty-state">Las recomendaciones aparecerán cuando se detecten materias y calificaciones.</div>`;
+        el("ollamaBtn").disabled = true;
+        el("ollamaBtn2").disabled = true;
+        el("copyPromptBtn").disabled = true;
+        return;
+      }
+      state.analysis = analyzeRecords(state.records);
+      renderAll();
+      el("ollamaBtn").disabled = false;
+      el("ollamaBtn2").disabled = false;
+      el("copyPromptBtn").disabled = false;
+    }
+
+    function parseAcademicText(text) {
+      const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.replace(/\s+/g, " ").trim())
+        .filter(Boolean);
+
+      const records = [];
+      let currentPeriod = "";
+      for (const line of lines) {
+        const period = detectPeriod(line);
+        if (period && (isPeriodOnlyLine(line) || !hasGrade(line))) {
+          currentPeriod = period;
+          continue;
+        }
+        const record = parseAcademicLine(line, currentPeriod);
+        if (record) {
+          currentPeriod = record.period || currentPeriod;
+          records.push(record);
+        }
+      }
+
+      return dedupeRecords(records).map((record, index) => ({
+        ...record,
+        id: index + 1,
+        area: classifyArea(record.subject),
+        normalizedGrade: normalizeGrade(record.grade)
+      }));
+    }
+
+    function parseAcademicLine(line, currentPeriod) {
+      const lower = line.toLowerCase();
+      if (isPeriodOnlyLine(line)) return null;
+      if (/(promedio|matricula|matrícula|alumno|nombre|historial|licenciatura|universidad|facultad|kardex|créditos acumulados|creditos acumulados)/i.test(line) && !hasGrade(line)) {
+        return null;
+      }
+
+      let parts = line.split(/\t| {2,}|,|;/).map((part) => part.trim()).filter(Boolean);
+      if (parts.length < 2) parts = line.split(" ").map((part) => part.trim()).filter(Boolean);
+
+      const status = detectStatus(line);
+      const period = detectPeriod(line) || currentPeriod || inferPeriodFromLine(line);
+      const numericTokens = findNumericTokens(line);
+      if (!numericTokens.length && !status) return null;
+
+      const grade = pickGrade(numericTokens, line);
+      if (!Number.isFinite(grade) && !/aprob|acredit|reprob|no aprob|np|na/i.test(lower)) return null;
+
+      let credits = pickCredits(numericTokens, grade);
+      let subject = line;
+      subject = subject.replace(/\b(ORDINARIO|EXTRAORDINARIO|REGULARIZACI[ÓO]N|RECURSAMIENTO|APROBADO|APROBADA|ACREDITADO|ACREDITADA|REPROBADO|REPROBADA|NO APROBADO|NO APROBADA|NP|NA|S\/A)\b/gi, " ");
+      subject = subject.replace(/\b(PRIMER|SEGUNDO|TERCER|CUARTO|QUINTO|SEXTO|S[ÉE]PTIMO|OCTAVO|NOVENO|D[ÉE]CIMO)\s+(SEMESTRE|PERIODO)\b/gi, " ");
+      subject = subject.replace(/\bSEMESTRE\s+([IVX]{1,5}|\d{1,2})\b/gi, " ");
+      subject = subject.replace(/\b(20\d{2}[-\/ ]?[12]?|ENE[- ]?JUN|AGO[- ]?DIC|PRIMAVERA|OTOÑO|VERANO)\b/gi, " ");
+      if (Number.isFinite(grade)) subject = subject.replace(new RegExp(`\\b${escapeRegExp(String(grade))}\\b`), " ");
+      if (Number.isFinite(credits)) subject = subject.replace(new RegExp(`\\b${escapeRegExp(String(credits))}\\b`), " ");
+      subject = subject.replace(/\s+/g, " ").trim();
+
+      if (subject.length < 4 || /^\d+$/.test(subject)) return null;
+      if (subject.split(" ").length === 1 && subject.length < 7) return null;
+
+      return {
+        period,
+        subject: toTitle(subject),
+        grade: Number.isFinite(grade) ? grade : null,
+        credits,
+        status: status || gradeStatus(grade)
+      };
+    }
+
+    function hasGrade(line) {
+      return findNumericTokens(line).some((token) => token.value >= 0 && token.value <= 100 && !token.isYear);
+    }
+
+    function findNumericTokens(line) {
+      const tokens = [];
+      const regex = /(^|[^\d])(\d{1,3}(?:\.\d{1,2})?)(?!\d)/g;
+      let match;
+      while ((match = regex.exec(line)) !== null) {
+        const raw = match[2];
+        const value = Number(raw);
+        const before = line.slice(Math.max(0, match.index - 2), match.index + raw.length + 2);
+        tokens.push({
+          raw,
+          value,
+          index: match.index + match[1].length,
+          isYear: /^20\d{2}$/.test(raw) || /20\d{2}/.test(before)
+        });
+      }
+      return tokens;
+    }
+
+    function pickGrade(tokens, line) {
+      const passGrade = getPassGrade();
+      const candidates = tokens
+        .filter((token) => !token.isYear)
+        .filter((token) => token.value >= 0 && token.value <= 100)
+        .filter((token) => !(token.value <= 12 && tokens.some((other) => other.value > 12 && other.value <= 100)));
+
+      if (!candidates.length) return NaN;
+
+      const strong = candidates.filter((token) => token.value >= passGrade || token.value > 10);
+      if (strong.length) return strong[strong.length - 1].value;
+      if (candidates.length > 1 && candidates.every((token) => token.value <= 10)) return candidates[0].value;
+      return candidates[candidates.length - 1].value;
+    }
+
+    function pickCredits(tokens, grade) {
+      const candidates = tokens
+        .filter((token) => !token.isYear)
+        .map((token) => token.value)
+        .filter((value) => value > 0 && value <= 12 && value !== grade);
+      return candidates.length ? candidates[candidates.length - 1] : null;
+    }
+
+    function detectStatus(line) {
+      if (/no aprobado|reprobado|reprobada|\bna\b/i.test(line)) return "Reprobada";
+      if (/\bnp\b|sin derecho|no present/i.test(line)) return "No presentada";
+      if (/aprobado|aprobada|acreditado|acreditada/i.test(line)) return "Aprobada";
+      if (/extraordinario/i.test(line)) return "Extraordinario";
+      if (/ordinario/i.test(line)) return "Ordinario";
+      return "";
+    }
+
+    function gradeStatus(grade) {
+      if (!Number.isFinite(grade)) return "Sin calificación";
+      return normalizeGrade(grade) >= getPassGrade() ? "Aprobada" : "Reprobada";
+    }
+
+    function detectPeriod(line) {
+      const patterns = [
+        /\b(20\d{2})[-\/ ]?([12])\b/,
+        /\b(20\d{2})\s*(ENE[- ]?JUN|AGO[- ]?DIC|PRIMAVERA|OTOÑO|VERANO)\b/i,
+        /\b(ENE[- ]?JUN|AGO[- ]?DIC|PRIMAVERA|OTOÑO|VERANO)\s*(20\d{2})\b/i,
+        /\b(PRIMER|SEGUNDO|TERCER|CUARTO|QUINTO|SEXTO|S[ÉE]PTIMO|OCTAVO|NOVENO|D[ÉE]CIMO)\s+(SEMESTRE|PERIODO)\b/i,
+        /\bSEMESTRE\s+([IVX]{1,5}|\d{1,2})\b/i
+      ];
+      for (const pattern of patterns) {
+        const match = line.match(pattern);
+        if (match) return match[0].replace(/\s+/g, " ").toUpperCase();
+      }
+      return "";
+    }
+
+    function isPeriodOnlyLine(line) {
+      const normalized = line
+        .replace(/\b(20\d{2})[-\/ ]?([12])\b/gi, "")
+        .replace(/\b(20\d{2})\s*(ENE[- ]?JUN|AGO[- ]?DIC|PRIMAVERA|OTOÑO|VERANO)\b/gi, "")
+        .replace(/\b(ENE[- ]?JUN|AGO[- ]?DIC|PRIMAVERA|OTOÑO|VERANO)\s*(20\d{2})\b/gi, "")
+        .replace(/\b(PRIMER|SEGUNDO|TERCER|CUARTO|QUINTO|SEXTO|S[ÉE]PTIMO|OCTAVO|NOVENO|D[ÉE]CIMO)\s+(SEMESTRE|PERIODO)\b/gi, "")
+        .replace(/\bSEMESTRE\s+([IVX]{1,5}|\d{1,2})\b/gi, "")
+        .replace(/\b(PERIODO|SEMESTRE|CICLO|CUATRIMESTRE)\b/gi, "")
+        .replace(/[^\p{L}\p{N}]+/gu, "")
+        .trim();
+      return detectPeriod(line) && normalized.length === 0;
+    }
+
+    function inferPeriodFromLine(line) {
+      const match = line.match(/\b([1-9]|1[0-2])\s*(?:SEM|SEMESTRE)\b/i);
+      return match ? `SEMESTRE ${match[1]}` : "";
+    }
+
+    function dedupeRecords(records) {
+      const seen = new Set();
+      return records.filter((record) => {
+        const key = `${record.period}|${record.subject}|${record.grade}`.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function classifyArea(subject) {
+      const normalized = subject.toLowerCase();
+      let best = { area: "Formación general", score: 0 };
+      for (const rule of areaRules) {
+        const score = rule.keys.reduce((count, key) => count + (normalized.includes(key) ? 1 : 0), 0);
+        if (score > best.score) best = { area: rule.area, score };
+      }
+      return best.area;
+    }
+
+    function normalizeGrade(grade) {
+      if (!Number.isFinite(grade)) return null;
+      if (grade <= 10) return grade * 10;
+      return grade;
+    }
+
+    function getPassGrade() {
+      return clamp(Number(el("passGrade").value) || 60, 0, 100);
+    }
+
+    function analyzeRecords(records) {
+      const passGrade = getPassGrade();
+      const graded = records.filter((record) => Number.isFinite(record.normalizedGrade));
+      const passed = graded.filter((record) => record.normalizedGrade >= passGrade);
+      const failed = graded.filter((record) => record.normalizedGrade < passGrade || /reprob|no present/i.test(record.status));
+      const credits = records.reduce((sum, record) => sum + (Number(record.credits) || 0), 0);
+      const average = weightedAverage(graded);
+      const areaStats = buildAreaStats(graded);
+      const periodStats = buildPeriodStats(graded);
+      const trend = computeTrend(periodStats);
+      const consistency = computeConsistency(graded.map((record) => record.normalizedGrade));
+      const risk = estimateRisk({ average, records, failed, trend, consistency, areaStats });
+      const suggestedLoad = suggestLoad({ average, risk, failed, trend, graded });
+      const strongAreas = Object.values(areaStats).filter((area) => area.count >= 1).sort((a, b) => b.average - a.average).slice(0, 3);
+      const weakAreas = Object.values(areaStats).filter((area) => area.count >= 1).sort((a, b) => a.average - b.average).slice(0, 3);
+      const jobFit = estimateJobFit(strongAreas, average, risk);
+      const career = pickCareerPath(strongAreas, weakAreas);
+      const insights = buildInsights({ average, passed, failed, trend, risk, suggestedLoad, strongAreas, weakAreas, consistency, credits });
+      const recommendations = buildRecommendations(strongAreas, weakAreas, career);
+
+      return {
+        passGrade,
+        total: records.length,
+        graded: graded.length,
+        passed: passed.length,
+        failed: failed.length,
+        credits,
+        average,
+        areaStats,
+        periodStats,
+        trend,
+        consistency,
+        risk,
+        suggestedLoad,
+        strongAreas,
+        weakAreas,
+        jobFit,
+        career,
+        insights,
+        recommendations
+      };
+    }
+
+    function weightedAverage(records) {
+      if (!records.length) return 0;
+      const weighted = records.reduce((acc, record) => {
+        const weight = Number(record.credits) || 1;
+        acc.sum += record.normalizedGrade * weight;
+        acc.weight += weight;
+        return acc;
+      }, { sum: 0, weight: 0 });
+      return weighted.weight ? weighted.sum / weighted.weight : 0;
+    }
+
+    function buildAreaStats(records) {
+      const stats = {};
+      for (const record of records) {
+        if (!stats[record.area]) stats[record.area] = { area: record.area, count: 0, sum: 0, credits: 0, failed: 0, average: 0 };
+        const weight = Number(record.credits) || 1;
+        stats[record.area].count += 1;
+        stats[record.area].sum += record.normalizedGrade * weight;
+        stats[record.area].credits += weight;
+        if (record.normalizedGrade < getPassGrade()) stats[record.area].failed += 1;
+      }
+      Object.values(stats).forEach((area) => {
+        area.average = area.credits ? area.sum / area.credits : 0;
+      });
+      return stats;
+    }
+
+    function buildPeriodStats(records) {
+      const bucket = {};
+      records.forEach((record, index) => {
+        const period = record.period || `Bloque ${Math.floor(index / 6) + 1}`;
+        if (!bucket[period]) bucket[period] = { period, count: 0, sum: 0, average: 0 };
+        bucket[period].count += 1;
+        bucket[period].sum += record.normalizedGrade;
+      });
+      const stats = Object.values(bucket);
+      stats.forEach((period) => period.average = period.count ? period.sum / period.count : 0);
+      return stats;
+    }
+
+    function computeTrend(periodStats) {
+      if (periodStats.length < 2) return 0;
+      const n = periodStats.length;
+      const xs = periodStats.map((_, i) => i + 1);
+      const ys = periodStats.map((period) => period.average);
+      const meanX = xs.reduce((a, b) => a + b, 0) / n;
+      const meanY = ys.reduce((a, b) => a + b, 0) / n;
+      const numerator = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0);
+      const denominator = xs.reduce((sum, x) => sum + Math.pow(x - meanX, 2), 0) || 1;
+      return numerator / denominator;
+    }
+
+    function computeConsistency(values) {
+      if (values.length < 2) return 1;
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
+      const sd = Math.sqrt(variance);
+      return clamp(1 - sd / 25, 0, 1);
+    }
+
+    function estimateRisk({ average, records, failed, trend, consistency, areaStats }) {
+      const failRate = records.length ? failed.length / records.length : 0;
+      const weakAreaRate = Object.values(areaStats).filter((area) => area.average < 70).length / Math.max(1, Object.keys(areaStats).length);
+      const avgFeature = (75 - average) / 15;
+      const trendFeature = trend < 0 ? Math.abs(trend) / 4 : -trend / 8;
+      const logistic = sigmoid(-1.15 + 1.6 * avgFeature + 2.1 * failRate + 1.2 * weakAreaRate + .8 * trendFeature - .7 * consistency);
+
+      const neuralHidden1 = sigmoid(.9 * avgFeature + 1.4 * failRate + .6 * weakAreaRate + .4 * trendFeature);
+      const neuralHidden2 = sigmoid(.5 * avgFeature + .7 * failRate + 1.1 * (1 - consistency));
+      const neural = sigmoid(-1.05 + 1.7 * neuralHidden1 + 1.15 * neuralHidden2);
+      return clamp((logistic * .58 + neural * .42), 0, 1);
+    }
+
+    function suggestLoad({ average, risk, failed, trend, graded }) {
+      let load = 6;
+      if (average >= 90 && risk < .22 && trend >= -1) load = 8;
+      else if (average >= 82 && risk < .32) load = 7;
+      else if (average >= 75 && risk < .45) load = 6;
+      else if (average >= 68 && risk < .62) load = 5;
+      else load = 4;
+      if (failed.length >= 3) load -= 1;
+      if (trend < -2) load -= 1;
+      if (graded.length < 5) load = Math.min(load, 5);
+      return clamp(load, 3, 8);
+    }
+
+    function estimateJobFit(strongAreas, average, risk) {
+      const areaBonus = strongAreas.length ? Math.min(18, strongAreas[0].average - 75) : 0;
+      return clamp(52 + (average - 70) * .8 + areaBonus - risk * 18, 0, 100);
+    }
+
+    function pickCareerPath(strongAreas, weakAreas) {
+      const top = strongAreas[0]?.area || "Formación general";
+      if (top.includes("Datos")) return "Analista de datos / IA junior";
+      if (top.includes("Programación")) return "Desarrollador de software junior";
+      if (top.includes("Redes")) return "Soporte, infraestructura o ciberseguridad junior";
+      if (top.includes("Gestión")) return "Analista funcional / gestión de proyectos TI";
+      if (weakAreas[0]?.area.includes("Comunicación")) return "Ruta técnica con refuerzo de inglés";
+      return "Perfil full-stack junior con portafolio";
+    }
+
+    function buildInsights(data) {
+      const riskText = data.risk < .3 ? "bajo" : data.risk < .58 ? "medio" : "alto";
+      const trendText = data.trend > 1 ? "ascendente" : data.trend < -1 ? "descendente" : "estable";
+      const insights = [
+        {
+          tone: data.average >= 80 ? "green" : data.average >= 70 ? "orange" : "red",
+          title: `Promedio ${round(data.average)} con trayectoria ${trendText}`,
+          text: `El promedio ponderado estimado considera créditos cuando aparecen en el historial. La consistencia académica es de ${round(data.consistency * 100, 0)}%.`
+        },
+        {
+          tone: data.risk < .3 ? "green" : data.risk < .58 ? "orange" : "red",
+          title: `Riesgo académico ${riskText}`,
+          text: `El ensamble local combina regresión logística y una red neuronal ligera con promedio, reprobación, tendencia, consistencia y áreas débiles.`
+        },
+        {
+          tone: "teal",
+          title: `Cursar ${data.suggestedLoad} materias el próximo periodo`,
+          text: data.failed > 0
+            ? `Prioriza regularizar ${data.failed} materia(s) con bajo desempeño antes de aumentar la carga.`
+            : "La carga sugerida busca equilibrio entre avance, desempeño y tiempo para proyectos de portafolio."
+        }
+      ];
+      if (data.weakAreas[0]) {
+        insights.push({
+          tone: "orange",
+          title: `Área de mejora: ${data.weakAreas[0].area}`,
+          text: `Promedio estimado de ${round(data.weakAreas[0].average)} en ${data.weakAreas[0].count} materia(s). Conviene reforzar fundamentos y práctica guiada.`
+        });
+      }
+      if (data.strongAreas[0]) {
+        insights.push({
+          tone: "green",
+          title: `Área a potenciar: ${data.strongAreas[0].area}`,
+          text: `Promedio estimado de ${round(data.strongAreas[0].average)}. Es buena base para proyectos, certificaciones y experiencia demostrable.`
+        });
+      }
+      return insights;
+    }
+
+    function buildRecommendations(strongAreas, weakAreas, career) {
+      const weak = weakAreas.map((area) => area.area);
+      const strong = strongAreas.map((area) => area.area);
+      const cards = [];
+
+      const improveItems = unique(weak.flatMap((area) => recommendationsByArea[area]?.improve || recommendationsByArea["Formación general"].improve)).slice(0, 5);
+      const boostItems = unique(strong.flatMap((area) => recommendationsByArea[area]?.boost || recommendationsByArea["Formación general"].boost)).slice(0, 5);
+
+      cards.push({ title: "Reforzar primero", items: improveItems.length ? improveItems : recommendationsByArea["Formación general"].improve });
+      cards.push({ title: "Potenciar ventaja", items: boostItems.length ? boostItems : recommendationsByArea["Formación general"].boost });
+      cards.push({
+        title: career,
+        items: [
+          "Publicar proyectos en GitHub con README y capturas",
+          "Crear CV de una página con habilidades medibles",
+          "Practicar entrevistas técnicas y explicar decisiones de diseño"
+        ]
+      });
+      cards.push({
+        title: "Certificaciones con alta señal",
+        items: ["AWS Cloud Practitioner o Azure AZ-900", "GitHub Foundations", "Scrum Fundamentals", "Inglés técnico B2"]
+      });
+      cards.push({
+        title: "Proyecto integrador sugerido",
+        items: ["Dashboard web con base de datos", "API REST documentada", "Análisis de datos con modelo predictivo simple", "Despliegue en nube"]
+      });
+      cards.push({
+        title: "Hábitos académicos",
+        items: ["Bloques semanales de estudio profundo", "Bitácora de errores por materia", "Repaso espaciado antes de exámenes", "Tutoría temprana si baja de 70"]
+      });
+      return cards;
+    }
+
+    function renderAll() {
+      renderKpis();
+      renderHistory();
+      renderInsights();
+      renderRecommendations();
+      drawAreaChart();
+      drawTrendChart();
+      updateLoadSimulation();
+      buildPrompt();
+    }
+
+    function renderKpis() {
+      const analysis = state.analysis;
+      el("kpiAverage").textContent = analysis.graded ? round(analysis.average) : "--";
+      el("kpiAverageMeta").textContent = analysis.graded ? `${analysis.graded} materias con calificación` : "Sin calificaciones";
+      el("kpiPassed").textContent = analysis.passed;
+      el("kpiPassedMeta").textContent = `${analysis.failed} con alerta o reprobadas`;
+      el("kpiRisk").textContent = `${round(analysis.risk * 100, 0)}%`;
+      el("kpiRiskMeta").textContent = analysis.risk < .3 ? "Bajo" : analysis.risk < .58 ? "Medio" : "Alto";
+      el("kpiLoad").textContent = analysis.suggestedLoad;
+      el("kpiLoadMeta").textContent = "Materias recomendadas";
+      el("kpiJobFit").textContent = `${round(analysis.jobFit, 0)}%`;
+      el("kpiJobFitMeta").textContent = analysis.career;
+      el("trendLabel").textContent = analysis.trend > 1 ? "Tendencia ascendente" : analysis.trend < -1 ? "Tendencia descendente" : "Tendencia estable";
+      el("careerPath").textContent = analysis.career;
+      setStatus("analysisQuality", analysis.total >= 8 ? "ok" : "warn", analysis.total >= 8 ? "Lectura confiable" : "Pocos datos");
+    }
+
+    function renderHistory() {
+      const body = el("historyBody");
+      el("recordCount").textContent = `${state.records.length} registros`;
+      if (!state.records.length) {
+        body.innerHTML = `<tr><td colspan="6"><div class="empty-state">No se detectaron materias. Prueba pegando el texto del historial con columnas de materia y calificación.</div></td></tr>`;
+        return;
+      }
+
+      body.innerHTML = state.records.map((record) => {
+        const grade = Number.isFinite(record.normalizedGrade) ? round(record.normalizedGrade) : "--";
+        const gradeClass = record.normalizedGrade >= 85 ? "high" : record.normalizedGrade >= getPassGrade() ? "mid" : "low";
+        const statusClass = /reprob|no present/i.test(record.status) || record.normalizedGrade < getPassGrade() ? "bad" : "ok";
+        return `
+          <tr>
+            <td>${escapeHtml(record.period || "No detectado")}</td>
+            <td>${escapeHtml(record.subject)}</td>
+            <td>${escapeHtml(record.area)}</td>
+            <td><span class="grade ${gradeClass}">${grade}</span></td>
+            <td>${record.credits ?? "--"}</td>
+            <td><span class="status ${statusClass}">${escapeHtml(record.status || gradeStatus(record.grade))}</span></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderInsights() {
+      const container = el("insights");
+      container.innerHTML = state.analysis.insights.map((insight) => `
+        <div class="insight ${insight.tone}">
+          <strong>${escapeHtml(insight.title)}</strong>
+          <p>${escapeHtml(insight.text)}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderRecommendations() {
+      const container = el("recommendations");
+      container.innerHTML = state.analysis.recommendations.map((card) => `
+        <article class="rec-card">
+          <h3>${escapeHtml(card.title)}</h3>
+          <ul>${card.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </article>
+      `).join("");
+    }
+
+    function resizeCanvases() {
+      document.querySelectorAll("canvas").forEach((canvas) => {
+        const rect = canvas.getBoundingClientRect();
+        const scale = window.devicePixelRatio || 1;
+        const width = Math.max(300, rect.width);
+        const height = Math.max(180, rect.height);
+        canvas.width = Math.floor(width * scale);
+        canvas.height = Math.floor(height * scale);
+        const context = canvas.getContext("2d");
+        context.setTransform(scale, 0, 0, scale, 0, 0);
+      });
+      if (state.analysis) {
+        drawAreaChart();
+        drawTrendChart();
+      } else {
+        drawEmptyChart(el("areaChart"), "Sin datos");
+        drawEmptyChart(el("trendChart"), "Sin datos");
+      }
+    }
+
+    function drawAreaChart() {
+      const canvas = el("areaChart");
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      clearCanvas(ctx, rect);
+      const stats = Object.values(state.analysis.areaStats).sort((a, b) => b.average - a.average);
+      if (!stats.length) return drawEmptyChart(canvas, "Sin áreas detectadas");
+
+      const margin = { top: 16, right: 24, bottom: 38, left: 158 };
+      const width = rect.width - margin.left - margin.right;
+      const barHeight = Math.min(34, (rect.height - margin.top - margin.bottom) / stats.length - 7);
+      drawAxisLabel(ctx, "Promedio por área", margin.left, 8);
+
+      stats.forEach((area, index) => {
+        const y = margin.top + index * (barHeight + 9) + 18;
+        const barWidth = width * clamp(area.average / 100, 0, 1);
+        ctx.fillStyle = "#eef2f7";
+        roundRect(ctx, margin.left, y, width, barHeight, 5);
+        ctx.fill();
+        ctx.fillStyle = area.average >= 85 ? "#0f8f5f" : area.average >= getPassGrade() ? "#c46a1a" : "#b42318";
+        roundRect(ctx, margin.left, y, barWidth, barHeight, 5);
+        ctx.fill();
+        ctx.fillStyle = "#344054";
+        ctx.font = "12px Segoe UI, Arial";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillText(truncate(area.area, 24), margin.left - 9, y + barHeight / 2);
+        ctx.fillStyle = "#111827";
+        ctx.textAlign = "left";
+        ctx.font = "700 12px Segoe UI, Arial";
+        ctx.fillText(`${round(area.average)} (${area.count})`, margin.left + barWidth + 7, y + barHeight / 2);
+      });
+    }
+
+    function drawTrendChart() {
+      const canvas = el("trendChart");
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      clearCanvas(ctx, rect);
+      const stats = state.analysis.periodStats;
+      if (!stats.length) return drawEmptyChart(canvas, "Sin periodos detectados");
+      const margin = { top: 16, right: 18, bottom: 42, left: 42 };
+      const width = rect.width - margin.left - margin.right;
+      const height = rect.height - margin.top - margin.bottom;
+      drawGrid(ctx, margin, width, height);
+
+      const points = stats.map((period, index) => ({
+        x: margin.left + (stats.length === 1 ? width / 2 : index * (width / (stats.length - 1))),
+        y: margin.top + height - clamp(period.average / 100, 0, 1) * height,
+        label: period.period,
+        value: period.average
+      }));
+
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.stroke();
+
+      points.forEach((point, index) => {
+        ctx.fillStyle = "#f2c811";
+        ctx.strokeStyle = "#111827";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#475467";
+        ctx.font = "11px Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(truncate(point.label, 10), point.x, rect.height - 18 - (index % 2) * 12);
+      });
+    }
+
+    function drawEmptyChart(canvas, message) {
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      clearCanvas(ctx, rect);
+      ctx.fillStyle = "#667085";
+      ctx.font = "13px Segoe UI, Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(message, rect.width / 2, rect.height / 2);
+    }
+
+    function drawGrid(ctx, margin, width, height) {
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#667085";
+      ctx.font = "11px Segoe UI, Arial";
+      ctx.textAlign = "right";
+      for (let i = 0; i <= 4; i++) {
+        const y = margin.top + height - (height * i / 4);
+        const label = i * 25;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(margin.left + width, y);
+        ctx.stroke();
+        ctx.fillText(label, margin.left - 7, y + 4);
+      }
+    }
+
+    function clearCanvas(ctx, rect) {
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    function drawAxisLabel(ctx, text, x, y) {
+      ctx.fillStyle = "#667085";
+      ctx.font = "12px Segoe UI, Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(text, x, y + 8);
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + width, y, x + width, y + height, r);
+      ctx.arcTo(x + width, y + height, x, y + height, r);
+      ctx.arcTo(x, y + height, x, y, r);
+      ctx.arcTo(x, y, x + width, y, r);
+      ctx.closePath();
+    }
+
+    function updateLoadSimulation() {
+      const value = Number(el("loadSlider").value);
+      el("loadValue").textContent = value;
+      if (!state.analysis) return;
+      const delta = value - state.analysis.suggestedLoad;
+      const simulatedRisk = clamp(state.analysis.risk + delta * .055 + Math.max(0, delta - 1) * .035, 0, 1);
+      const tone = simulatedRisk < .3 ? "green" : simulatedRisk < .58 ? "orange" : "red";
+      const title = `${value} materias: riesgo estimado ${round(simulatedRisk * 100, 0)}%`;
+      const text = delta <= 0
+        ? "La carga queda dentro o por debajo de la recomendación local, dejando margen para regularización, proyectos e inglés."
+        : "La carga supera la recomendación; compénsala con horarios estables, menos actividades simultáneas y seguimiento semanal.";
+      el("loadSimulation").className = `insight ${tone}`;
+      el("loadSimulation").innerHTML = `<strong>${escapeHtml(title)}</strong><p>${escapeHtml(text)}</p>`;
+    }
+
+    function printReport() {
+      resizeCanvases();
+      const reportHtml = buildPrintableDocument();
+      const blob = new Blob([reportHtml], { type: "text/html;charset=utf-8" });
+      const reportUrl = URL.createObjectURL(blob);
+      const reportWindow = window.open(reportUrl, "_blank");
+
+      if (!reportWindow) {
+        downloadPrintableReport(reportHtml);
+        URL.revokeObjectURL(reportUrl);
+        alert("El navegador bloqueó la pestaña de impresión. Descargué una versión HTML del reporte; ábrela y usa Imprimir o Guardar como PDF.");
+        return;
+      }
+
+      reportWindow.focus();
+      setTimeout(() => URL.revokeObjectURL(reportUrl), 60000);
+    }
+
+    function buildPrintableDocument() {
+      const mainClone = document.querySelector("main").cloneNode(true);
+      const originalCanvases = document.querySelectorAll("canvas");
+
+      originalCanvases.forEach((canvas) => {
+        const clonedCanvas = mainClone.querySelector(`#${canvas.id}`);
+        if (!clonedCanvas) return;
+        const image = document.createElement("img");
+        image.src = canvas.toDataURL("image/png");
+        image.alt = canvas.getAttribute("aria-label") || "Gráfica del reporte";
+        image.style.width = "100%";
+        image.style.height = "auto";
+        image.style.display = "block";
+        clonedCanvas.replaceWith(image);
+      });
+
+      mainClone.querySelectorAll(".actions, .button-row.no-print, .panel-tools, .uploader-panel").forEach((node) => node.remove());
+      const promptPanel = mainClone.querySelector("#ollama .panel");
+      if (promptPanel) promptPanel.remove();
+      mainClone.querySelectorAll("textarea, input, select").forEach((field) => {
+        const replacement = document.createElement("div");
+        replacement.className = "print-field";
+        replacement.textContent = field.value || field.textContent || "";
+        field.replaceWith(replacement);
+      });
+
+      const styles = document.querySelector("style").textContent;
+      const generatedAt = new Date().toLocaleString("es-MX");
+
+      return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reporte de trayectoria académica</title>
+  <style>
+    ${styles}
+    body { background: #fff; }
+    .app { display: block; min-height: auto; }
+    main { padding: 18px; }
+    .topbar, .panel, .kpi { box-shadow: none; }
+    .print-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 10px;
+      background: #111827;
+      border-bottom: 3px solid #f2c811;
+    }
+    .print-toolbar button {
+      border: 0;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font: 600 13px "Segoe UI", Arial, sans-serif;
+      cursor: pointer;
+    }
+    .print-toolbar button:first-child { background: #f2c811; color: #111827; }
+    .print-toolbar button:last-child { background: #fff; color: #111827; }
+    .print-stamp {
+      color: #667085;
+      font-size: 11px;
+      text-align: right;
+      margin: 0 0 10px;
+    }
+    .print-field {
+      white-space: pre-wrap;
+      border: 1px solid #d0d5dd;
+      border-radius: 6px;
+      padding: 9px;
+      min-height: 38px;
+    }
+    @media print {
+      .print-toolbar { display: none !important; }
+      main { padding: 0; }
+      @page { margin: 12mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-toolbar">
+    <button onclick="window.print()">Imprimir / Guardar como PDF</button>
+    <button onclick="downloadHtml()">Descargar HTML</button>
+  </div>
+  <main>
+    <div class="print-stamp">Generado: ${escapeHtml(generatedAt)}</div>
+    ${mainClone.innerHTML}
+  </main>
+  <script>
+    function downloadHtml() {
+      const html = "<!doctype html>\\n" + document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "reporte-trayectoria-academica.html";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+  <\/script>
+</body>
+</html>`;
+    }
+
+    function downloadPrintableReport(html) {
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "reporte-trayectoria-academica.html";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function buildPrompt() {
+      const summary = {
+        programa: el("careerName").value || "Licenciatura en Sistemas Computacionales",
+        promedio: round(state.analysis.average),
+        materias_con_alerta: state.analysis.failed,
+        riesgo_academico_porcentaje: round(state.analysis.risk * 100, 0),
+        carga_sugerida_materias: state.analysis.suggestedLoad,
+        tendencia: state.analysis.trend > 1 ? "ascendente" : state.analysis.trend < -1 ? "descendente" : "estable",
+        areas_fuertes: state.analysis.strongAreas.slice(0, 2).map((area) => `${area.area}: ${round(area.average)}`),
+        areas_de_mejora: state.analysis.weakAreas.slice(0, 2).map((area) => `${area.area}: ${round(area.average)}`),
+        ruta_empleabilidad: state.analysis.career,
+        materias_bajas: state.records
+          .filter((record) => Number.isFinite(record.normalizedGrade) && record.normalizedGrade < Math.max(75, state.analysis.passGrade))
+          .slice(0, 5)
+          .map((record) => `${record.subject} (${round(record.normalizedGrade)})`),
+        recomendaciones_clave: state.analysis.recommendations
+          .slice(0, 3)
+          .map((card) => ({ categoria: card.title, opciones: card.items.slice(0, 3) }))
+      };
+      state.latestPrompt = `${el("llmInstruction").value.trim()}\n\nDatos mínimos para decidir:\n${JSON.stringify(summary, null, 2)}`;
+      return state.latestPrompt;
+    }
+
+    async function callOllama() {
+      if (!state.analysis) runAnalysis();
+      if (!state.analysis) return;
+      const prompt = buildPrompt();
+      const url = el("ollamaUrl").value.trim();
+      const model = el("ollamaModel").value.trim() || "llama3.2:latest";
+      setStatus("ollamaStatus", "warn", "Consultando");
+      el("llmOutput").textContent = "Conectando con Ollama...\n";
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model,
+            prompt,
+            stream: true,
+            options: { temperature: 0.35, num_ctx: 8192 }
+          })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await readOllamaStream(response);
+        setStatus("ollamaStatus", "ok", "Respuesta lista");
+      } catch (error) {
+        console.error(error);
+        setStatus("ollamaStatus", "bad", "Sin conexión");
+        el("llmOutput").textContent =
+          `No se pudo conectar con Ollama desde el navegador.\n\nDetalle: ${error.message || error}\n\n` +
+          "Verifica que Ollama esté abierto, que el modelo exista y que el origen http://localhost:8080 esté permitido.\n\n" +
+          "Prompt generado para copiar:\n\n" + prompt;
+      }
+    }
+
+    async function testOllama() {
+      const baseUrl = getOllamaBaseUrl(el("ollamaUrl").value.trim());
+      const model = el("ollamaModel").value.trim() || "llama3.2:latest";
+      setStatus("ollamaStatus", "warn", "Probando");
+      el("llmOutput").textContent = `Probando conexión con ${baseUrl}...\n`;
+
+      try {
+        const response = await fetch(`${baseUrl}/api/tags`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const models = (data.models || []).map((item) => item.name || item.model).filter(Boolean);
+        const exactModel = models.find((name) => name === model || name === `${model}:latest`);
+        if (exactModel && exactModel !== model) el("ollamaModel").value = exactModel;
+
+        setStatus("ollamaStatus", "ok", "Ollama conectado");
+        el("llmOutput").textContent =
+          `Ollama responde correctamente.\n\n` +
+          `Endpoint: ${baseUrl}\n` +
+          `Modelo seleccionado: ${exactModel || model}\n\n` +
+          `Modelos instalados:\n${models.map((name) => `- ${name}`).join("\n") || "- No se encontraron modelos"}`;
+      } catch (error) {
+        console.error(error);
+        setStatus("ollamaStatus", "bad", "Prueba fallida");
+        el("llmOutput").textContent =
+          `No se pudo consultar ${baseUrl}/api/tags desde el navegador.\n\n` +
+          `Detalle: ${error.message || error}\n\n` +
+          "Si Ollama sí dice 'Ollama is running' en http://localhost:11434/, reinícialo permitiendo el origen http://localhost:8080.";
+      }
+    }
+
+    async function readOllamaStream(response) {
+      if (!response.body) {
+        const data = await response.json();
+        el("llmOutput").textContent = data.response || JSON.stringify(data, null, 2);
+        return;
+      }
+
+      setStatus("ollamaStatus", "warn", "Recibiendo");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let output = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const chunk = JSON.parse(line);
+          if (chunk.error) throw new Error(chunk.error);
+          if (chunk.response) {
+            output += chunk.response;
+            el("llmOutput").textContent = output;
+            el("llmOutput").scrollTop = el("llmOutput").scrollHeight;
+          }
+        }
+      }
+
+      if (buffer.trim()) {
+        const chunk = JSON.parse(buffer);
+        if (chunk.error) throw new Error(chunk.error);
+        if (chunk.response) output += chunk.response;
+      }
+      el("llmOutput").textContent = output || "Ollama respondió sin texto.";
+    }
+
+    function getOllamaBaseUrl(url) {
+      try {
+        const parsed = new URL(url || "http://localhost:11434/api/generate");
+        return `${parsed.protocol}//${parsed.host}`;
+      } catch {
+        return "http://localhost:11434";
+      }
+    }
+
+    async function copyPrompt() {
+      const prompt = buildPrompt();
+      try {
+        await navigator.clipboard.writeText(prompt);
+        setStatus("ollamaStatus", "ok", "Prompt copiado");
+      } catch {
+        el("llmOutput").textContent = prompt;
+        setStatus("ollamaStatus", "warn", "Prompt mostrado");
+      }
+    }
+
+    function loadSample() {
+      el("rawText").value = `SEMESTRE 1
+Programación I 92 8 Aprobada
+Matemáticas Discretas 78 7 Aprobada
+Álgebra Lineal 74 6 Aprobada
+Comunicación Oral y Escrita 88 4 Aprobada
+Inglés I 82 4 Aprobada
+
+SEMESTRE 2
+Programación Orientada a Objetos 86 8 Aprobada
+Cálculo Diferencial 62 7 Aprobada
+Base de Datos I 91 8 Aprobada
+Sistemas Operativos 70 7 Aprobada
+Inglés II 80 4 Aprobada
+
+SEMESTRE 3
+Estructura de Datos 84 8 Aprobada
+Redes de Computadoras 68 7 Aprobada
+Probabilidad y Estadística 58 7 Reprobada
+Ingeniería de Software 89 8 Aprobada
+Administración de Proyectos 76 5 Aprobada
+
+SEMESTRE 4
+Desarrollo Web 93 8 Aprobada
+Base de Datos Avanzadas 87 8 Aprobada
+Inteligencia Artificial 79 8 Aprobada
+Seguridad Informática 65 7 Aprobada
+Inglés Técnico 72 4 Aprobada`;
+      setStatus("fileStatus", "ok", "Ejemplo cargado");
+      runAnalysis();
+    }
+
+    function clearAll() {
+      el("rawText").value = "";
+      el("fileInput").value = "";
+      state.rawText = "";
+      state.records = [];
+      state.analysis = null;
+      state.latestPrompt = "";
+      setStatus("fileStatus", "info", "Sin archivo");
+      setStatus("analysisQuality", "warn", "Pendiente");
+      setStatus("ollamaStatus", "info", "Listo");
+      el("ollamaBtn").disabled = true;
+      el("ollamaBtn2").disabled = true;
+      el("copyPromptBtn").disabled = true;
+      el("historyBody").innerHTML = `<tr><td colspan="6"><div class="empty-state">Carga o pega un historial y pulsa Analizar.</div></td></tr>`;
+      el("recordCount").textContent = "0 registros";
+      el("insights").innerHTML = `<div class="empty-state">Aquí aparecerán fortalezas, focos de atención y recomendaciones de carga.</div>`;
+      el("recommendations").innerHTML = `<div class="empty-state">Las recomendaciones se generan a partir de las áreas más débiles y más fuertes.</div>`;
+      el("llmOutput").textContent = "El informe LLM aparecerá aquí. El análisis local funciona aunque Ollama no esté disponible.";
+      ["kpiAverage", "kpiPassed", "kpiRisk", "kpiLoad", "kpiJobFit"].forEach((id) => el(id).textContent = "--");
+      el("kpiAverageMeta").textContent = "Esperando historial";
+      el("kpiPassedMeta").textContent = "Sin registros";
+      el("kpiRiskMeta").textContent = "Modelo local";
+      el("kpiLoadMeta").textContent = "Materias próximo periodo";
+      el("kpiJobFitMeta").textContent = "Según áreas fuertes";
+      el("careerPath").textContent = "Ruta sugerida pendiente";
+      resizeCanvases();
+    }
+
+    function setStatus(id, tone, text) {
+      el(id).className = `status ${tone}`;
+      el(id).textContent = text;
+    }
+
+    function unique(items) {
+      return [...new Set(items.filter(Boolean))];
+    }
+
+    function toTitle(text) {
+      const keepUpper = new Set(["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "SQL", "IA", "TI"]);
+      return text.toLowerCase().split(" ").map((word) => {
+        const upper = word.toUpperCase();
+        if (keepUpper.has(upper)) return upper;
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }).join(" ");
+    }
+
+    function truncate(text, max) {
+      return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeRegExp(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+  </script>
+</body>
+</html>
