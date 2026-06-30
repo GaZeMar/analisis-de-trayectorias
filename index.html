@@ -826,7 +826,7 @@ Formato:
                 <button class="btn" id="testOllamaBtn">Probar conexión</button>
                 <button class="btn" id="copyPromptBtn" disabled>Copiar prompt</button>
               </div>
-              <p class="small">Si el navegador bloquea la conexión a Ollama, configura Ollama para aceptar el origen del archivo local o ejecuta la app desde un servidor local.</p>
+              <p class="small">Si usas GitHub Pages, Ollama debe permitir el origen de esta página. En Windows configura <code>OLLAMA_ORIGINS</code> con <code>https://gazemar.github.io</code> y reinicia Ollama.</p>
             </div>
           </div>
           <div class="panel">
@@ -2033,7 +2033,7 @@ Formato:
         setStatus("ollamaStatus", "bad", "Sin conexión");
         el("llmOutput").textContent =
           `No se pudo conectar con Ollama desde el navegador.\n\nDetalle: ${error.message || error}\n\n` +
-          "Verifica que Ollama esté abierto, que el modelo exista y que el origen http://localhost:8080 esté permitido.\n\n" +
+          getOllamaCorsHelp() + "\n\n" +
           "Prompt generado para copiar:\n\n" + prompt;
       }
     }
@@ -2064,7 +2064,7 @@ Formato:
         el("llmOutput").textContent =
           `No se pudo consultar ${baseUrl}/api/tags desde el navegador.\n\n` +
           `Detalle: ${error.message || error}\n\n` +
-          "Si Ollama sí dice 'Ollama is running' en http://localhost:11434/, reinícialo permitiendo el origen http://localhost:8080.";
+          getOllamaCorsHelp();
       }
     }
 
@@ -2115,6 +2115,21 @@ Formato:
       } catch {
         return "http://localhost:11434";
       }
+    }
+
+    function getOllamaCorsHelp() {
+      const origin = window.location.origin;
+      return [
+        "Si Ollama sí dice 'Ollama is running' en http://localhost:11434/, el bloqueo casi seguro es CORS/origen.",
+        "",
+        `Esta página se está ejecutando desde: ${origin}`,
+        "Ollama debe permitir ese origen.",
+        "",
+        "En Windows PowerShell ejecuta:",
+        `setx OLLAMA_ORIGINS \"${origin},http://localhost:8080,http://localhost:11434\"`,
+        "",
+        "Después cierra Ollama por completo y vuelve a abrirlo. Luego recarga esta página y pulsa 'Probar conexión'."
+      ].join("\n");
     }
 
     async function copyPrompt() {
